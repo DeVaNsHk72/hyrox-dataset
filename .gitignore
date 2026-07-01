@@ -1,0 +1,27 @@
+# Scraped data — don't push to git (huge, and workers write locally)
+data/
+data_full/
+data_v2/
+data_test/
+data_dist/
+data_smoke*/
+data_check/
+data_fast_test/
+collected_manifests/
+
+# logs / runtime state
+*.log
+scrape.log
+make_shards.log
+local_node07.log
+node07_run.log
+manifest.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# system
+.DS_Store
