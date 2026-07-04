@@ -560,7 +560,7 @@ def scrape_event(clients: list[HyroxClient], season_url: str, ev: EventCombo, ou
     year, city_name = split_city_year(ev.city)
     k = len(clients)
     n_total = 0
-    for sex in ("M", "W"):
+    for sex in ("M", "W", "X"):
         if manifest.is_done(ev, sex):
             continue
         rows: list[dict] = []
@@ -752,7 +752,7 @@ def write_data_dictionary(out_dir: Path, df) -> None:
         "city": "Host city / race location",
         "division": "Division + race day (e.g. HYROX PRO - Friday)",
         "event_id": "Site event identifier (division + race slot)",
-        "sex": "M or W",
+        "sex": "M, W, or X",
         "idp": "Site athlete/result id (unique within an event)",
         "bib": "Bib / start number (when published)",
         "name": "Athlete name (Last, First)",

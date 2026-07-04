@@ -1,0 +1,81 @@
+station,sex,rank,name,nationality,season,city,time
+1km SkiErg,M,1,"Ohanessi, Varoujan",AUT,2,Wien,0:15
+1km SkiErg,M,2,"De Vries, Wietse",NED,7,Amsterdam,0:15
+1km SkiErg,M,3,"Mchugh, Aidan",IRL,7,Dublin,0:16
+1km SkiErg,M,4,"BAUTISTA, Adan",USA,7,Las Vegas,0:17
+1km SkiErg,M,5,"Childs, Matt",GBR,6,Birmingham,0:18
+1km SkiErg,W,1,"Edwards, Victoria",GBR,8,Cardiff,0:15
+1km SkiErg,W,2,"Molenaar, Maresha",NED,5,Rotterdam,0:23
+1km SkiErg,W,3,"Tischer, Lale",AUT,8,Berlin,0:25
+1km SkiErg,W,4,"Kotterik, Nina",NED,6,Amsterdam,0:30
+1km SkiErg,W,5,"Mclarty, Emily",USA,8,Miami,0:31
+50m Sled Push,M,1,"Devoto, Luciano",ARG,8,Melbourne,0:15
+50m Sled Push,M,2,"Alayrac, Marceau",FRA,7,Toulouse,0:24
+50m Sled Push,M,3,"Roozenburg, Herman",NED,8,Heerenveen,0:25
+50m Sled Push,M,4,"Azwardy, Adam",INA,9,Jakarta,0:26
+50m Sled Push,M,5,"Magassa, Desse",FRA,7,Paris 1,0:27
+50m Sled Push,W,1,"Greil, Lisa",AUT,7,Vienna,0:15
+50m Sled Push,W,2,"Sharda, Shivani",GBR,8,Rome,0:22
+50m Sled Push,W,3,"Vitales Chaparro, Patricia",ESP,4,Madrid,0:42
+50m Sled Push,W,4,"Lysenko, Irina",UKR,4,Madrid,0:49
+50m Sled Push,W,5,"Dencker, Mette",GER,2,Leipzig,0:50
+50m Sled Pull,M,1,"朱, 梓铭",CHN,8,Shanghai,0:15
+50m Sled Pull,M,2,"Binks, Brian",USA,4,Los Angeles,0:19
+50m Sled Pull,M,3,"Viedma Valencia, Michael Angelo",ESP,4,Madrid,0:20
+50m Sled Pull,M,4,"Moulis, Sebastien",FRA,7,Toulouse,0:21
+50m Sled Pull,M,5,"BIDEGAIN, Xan",FRA,7,Toulouse,0:24
+50m Sled Pull,W,1,"JEFFCOATE, Rebecca",GBR,7,Auckland,0:18
+50m Sled Pull,W,2,"Bouwer, Monezta",RSA,7,Johannesburg I,0:31
+50m Sled Pull,W,3,"Mcdermott, Heather",USA,5,New York,0:36
+50m Sled Pull,W,4,"Schnoor, Liza",GER,7,Berlin,0:59
+50m Sled Pull,W,5,"任, 佳莹",CHN,8,Shanghai,1:00
+80m Burpee Broad Jump,M,1,"Zolkefri, Zahid",BRU,9,Jakarta,0:15
+80m Burpee Broad Jump,M,2,"Valloto, Luiz Fernando",BRA,8,Rio de Janeiro,0:15
+80m Burpee Broad Jump,M,3,"Chow, Will",CAN,8,Vancouver,0:15
+80m Burpee Broad Jump,M,4,"Benson, Pearson",USA,8,Houston,0:15
+80m Burpee Broad Jump,M,5,"Da Silva, Anderson",GBR,8,London Olympia,0:15
+80m Burpee Broad Jump,W,1,"Nunez, Dulce",USA,5,Dallas,0:15
+80m Burpee Broad Jump,W,2,"Liotta, Victoria",USA,6,New York,0:15
+80m Burpee Broad Jump,W,3,"Arizaga, Ana",USA,8,Anaheim,0:15
+80m Burpee Broad Jump,W,4,"廖, 鑫",CHN,8,Wuhan,0:15
+80m Burpee Broad Jump,W,5,"Shelley, Suzie",GBR,8,London Olympia,0:15
+1km Row,M,1,"Rinderer, Rudy",USA,6,Washington - North American Championships,0:17
+1km Row,M,2,"董, 宁",CHN,7,Beijing,0:17
+1km Row,M,3,"Horne, Najee",USA,5,Los Angeles,0:18
+1km Row,M,4,"Hendricks, Terry",USA,6,Dallas,0:19
+1km Row,M,5,"Chan, Chee Kah",SIN,6,Singapore,0:21
+1km Row,W,1,"Goedhart, Ingeborg",NED,5,Rotterdam,0:15
+1km Row,W,2,"Stobener, Josie",NED,6,Amsterdam,0:17
+1km Row,W,3,"Tekin, Meltem",GER,1,Hannover,0:18
+1km Row,W,4,"Feldman, Suzanne Tomiko",CAN,7,Miami Beach,0:20
+1km Row,W,5,"Adriano Silva, Olga Maria",MEX,8,Cancun,0:23
+200m Farmers Carry,M,1,"Gomez, Zach",USA,5,Dallas,0:15
+200m Farmers Carry,M,2,"Paddags, Sebastian",GER,1,Leipzig,0:15
+200m Farmers Carry,M,3,"Reid, Chris",GBR,8,Glasgow,0:21
+200m Farmers Carry,M,4,"Schober, Swen",GER,1,Leipzig,0:22
+200m Farmers Carry,M,5,"Noakes, David",GBR,7,Guadalajara,0:22
+200m Farmers Carry,W,1,"Steinke, Tina",GER,1,Leipzig,0:15
+200m Farmers Carry,W,2,"Müller, Nancy",GER,1,Leipzig,0:20
+200m Farmers Carry,W,3,"Buchegger, Lisa",AUT,1,Wien,0:21
+200m Farmers Carry,W,4,"Haiderer, Nicole",AUT,1,Wien,0:21
+200m Farmers Carry,W,5,"Zawrel, Nina",AUT,1,Wien,0:21
+100m Sandbag Lunges,M,1,"Porras González, Tomás de Jesús",ESP,8,Malaga,0:15
+100m Sandbag Lunges,M,2,"Brown, Patrick",GBR,8,Birmingham,0:15
+100m Sandbag Lunges,M,3,"Docherty, Garry",GBR,8,Birmingham,0:15
+100m Sandbag Lunges,M,4,"Roho, Byung-Uk",KOR,8,Hamburg,0:15
+100m Sandbag Lunges,M,5,"Zemar, Roman",NED,8,Malaga,0:15
+100m Sandbag Lunges,W,1,"Burrola, Diana",MEX,8,Stockholm,0:16
+100m Sandbag Lunges,W,2,"Rashid, Ryda",MAS,9,Jakarta,0:18
+100m Sandbag Lunges,W,3,"Veale, Marie",IRL,8,Dublin,0:19
+100m Sandbag Lunges,W,4,"Valentine, Eva",INA,9,Jakarta,0:24
+100m Sandbag Lunges,W,5,"Chandra, Jocelline",INA,9,Jakarta,0:31
+Wall Balls,M,1,"Veldhuijzen, Dick",NED,8,Rotterdam,0:15
+Wall Balls,M,2,"Hilgenstühler, Hendrik",GER,8,Hamburg,0:15
+Wall Balls,M,3,"Holland, James",GBR,8,Birmingham,0:17
+Wall Balls,M,4,"Stambolziev, Robert",AUS,8,Melbourne,0:17
+Wall Balls,M,5,"Hunn, Liam",GBR,7,Birmingham,0:18
+Wall Balls,W,1,"Bantick, Imogen",GBR,8,Maastricht,0:16
+Wall Balls,W,2,"Adom, Sinayo",RSA,8,Johannesburg,0:18
+Wall Balls,W,3,"Mclean, Lorna",GBR,7,London,0:18
+Wall Balls,W,4,"Westerink, Margriet",NED,7,Heerenveen,0:22
+Wall Balls,W,5,"Crawley, Pamela",GBR,7,Birmingham,0:35

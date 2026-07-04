@@ -1,0 +1,1057 @@
+\documentclass[11pt,a4paper]{article}
+
+% ------------------------------------------------------------------ setup
+\usepackage[margin=2.4cm,top=2.2cm,bottom=2.6cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{caption}
+\usepackage{fancyhdr}
+% Keep every figure and table inside the section that introduces it: a
+% barrier before each section flushes any pending floats first, so diagrams
+% never drift under the wrong heading.
+\usepackage[section]{placeins}
+\usepackage{hyperref}
+
+\definecolor{accent}{RGB}{2,132,199}
+\definecolor{dimtext}{RGB}{100,116,139}
+\definecolor{darktext}{RGB}{30,41,59}
+
+% Internal references in plain dark text, not blue; only real URLs stay colored.
+\hypersetup{colorlinks=true, linkcolor=darktext, urlcolor=accent}
+\captionsetup{font=small, labelfont={bf,color=darktext}, skip=8pt}
+
+% Let figures float gracefully instead of forcing them or hoarding them.
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{20pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{dimtext} Hyrox: Every Race Ever Run}
+\fancyhead[R]{\small\color{dimtext} \thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\graphicspath{{../analysis/output/figures/}}
+
+% Figure: full page width, capped height so it fits between text.
+% The first argument can be used to override the default key-value options for \includegraphics.
+\newcommand{\chart}[3][width=\linewidth,height=0.42\textheight]{%
+\begin{figure}[!htbp]\centering
+\includegraphics[#1,keepaspectratio]{#2.png}
+\caption{#3}\label{fig:#2}
+\end{figure}}
+
+% Table fragment from tables/
+\newcommand{\tabfrag}[2]{%
+\begin{table}[!htbp]\centering\small
+\input{tables/#1}
+\caption{#2}\label{tab:#1}
+\end{table}}
+
+\title{\vspace{-1em}{\Huge\bfseries Hyrox: Every Race Ever Run}\\[0.6em]
+{\Large What 1.18 million finish lines tell us about the world's fastest-growing fitness race}}
+\author{{\large\bfseries Devansh Khetan}\\[0.3em]
+{\color{dimtext} An analysis of the complete Hyrox results archive, Seasons 1 to 9 (2018 to 2026)}}
+\date{\color{dimtext} July 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+In the winter of 2017, a few thousand curious athletes turned up at exhibition
+halls in nine German-speaking cities to try a new kind of fitness race. Eight
+seasons later that race fills arenas on five continents, and it has quietly
+produced one of the richest datasets in amateur sport: every athlete, every
+kilometre run, every SkiErg, sled and wall ball, timed and published. I worked
+through all of it, 1{,}181{,}411 deduplicated results from 145 host cities,
+to answer the questions every Hyrox athlete eventually asks. How fast is fast?
+Where does the race actually hurt? Do negative splits work? What separates
+podium athletes from the rest of us? The short version: Hyrox is a running
+race wearing a strongman costume, pacing discipline is worth minutes, balance
+beats brilliance, and almost every all-time great performance was set in the
+last twenty-four months. A note before we begin: everything here is built on
+results data that was publicly scrapable from Hyrox's servers, so it inherits
+whatever gaps and quirks that archive contains.
+\end{abstract}
+
+\vspace{1em}
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+\newpage
+
+% ================================================================== 1
+\section{Introduction: the race, the first season, and this data}
+
+If you have never stood in a Hyrox arena, the format takes one sentence to
+explain and about ninety minutes to survive. You run one kilometre, then do a
+workout station, and you repeat that eight times: a thousand metres on the
+SkiErg, a 50 metre sled push, a 50 metre sled pull, 80 metres of burpee broad
+jumps, a thousand metres on the rowing machine, a 200 metre farmers carry,
+100 metres of walking lunges with a sandbag, and finally one hundred wall
+balls. Between each run and station you pass through a transition area the
+organisers call the roxzone, and the clock never stops. Every venue in the
+world uses the same distances, the same weights and the same layout, which is
+the quiet genius of the whole thing: a Hyrox time in Mumbai means the same as
+a Hyrox time in Manchester, so everyone on earth is effectively in one long
+race.
+
+The first season was a modest, almost entirely German affair. Nine cities
+hosted races in the winter of 2017/18: Hamburg was the biggest with about
+1{,}500 entries, followed by Karlsruhe, Hannover, N\"urnberg, Stuttgart,
+Essen, Oberhausen and Leipzig, with Vienna the only stop outside Germany. In
+total, 5{,}254 results were recorded that first winter. The fastest man of the
+season was Lukas Storath, who ran 58:39 in Stuttgart; the fastest woman was
+Nele Laing with 1:07:51 in Karlsruhe. Both marks would still be respectable
+today, which says something about how well-designed the race was from day
+one. Eight seasons later a single season produces close to six hundred
+thousand results, the men's all-time best has fallen to 50:38 (Alexander
+Roncevic, Cologne) and the women's to 56:53 (Lena Putters, Maastricht), and
+athletes of more than two hundred nationalities have crossed a Hyrox finish
+line.
+
+That growth left behind a remarkable paper trail. Hyrox publishes complete
+results with full split times: all eight runs, all eight stations, the
+roxzone, ranks and demographics. I collected the entire archive, about 1.67
+million raw rows, and cleaned it before drawing a single chart. The cleaning
+mattered more than usual. Multi-day events publish the same athletes twice,
+once in a day listing and again in an overall listing, and removing those
+duplicates cut the archive by nearly a third, down to 1{,}181{,}411 unique
+results. The 127 messy division labels in the raw data collapse into ten real
+formats, of which four matter most in this report: Open (the standard solo
+race), Pro (heavier weights), Doubles (two athletes share the station work)
+and Pro Doubles. And because the archive has no stable athlete identifier, I
+track people across races by name and sex, which works well at scale but
+makes career numbers estimates rather than exact counts. By that measure
+roughly 906{,}000 distinct athletes appear in the data. For anything about
+performance I use only what I call clean races: a plausible finish time with
+all sixteen splits present, which about 929{,}000 results satisfy. Many of
+the doubles entries carry only a finishing time and no station splits, so
+they count toward participation totals but never toward the performance
+analysis, which stays anchored on fully-timed solo races.
+
+One honest warning before the numbers start. This entire report is based on
+data that was scrapable from Hyrox's public results servers. It is the most
+complete picture of the sport available outside the company, but it is not an
+official export: athletes who never finished are largely missing, some fields
+are patchy in early seasons, and nothing here has been verified by Hyrox
+itself. Where a quirk of the data affects a conclusion, I say so in the text.
+
+% ================================================================== 2
+\section{From nine German cities to the world}
+
+The simplest way to see what happened to Hyrox is Table~\ref{tab:season_summary}.
+Every season roughly doubled or better after the pandemic, and the sport that
+managed 5{,}254 results in its first winter closed Season 8 with 679{,}500.
+One clarification, because the table can look odd at first glance: the
+nationalities column counts where the \emph{athletes} come from, not where
+races are held, which is why it exceeds the host city count. Races have been
+hosted in around thirty countries so far, but people from 235 nations have
+travelled to start one. Season 9 had barely begun when I collected the data,
+so its row (and its points in several charts later) should be read as a few
+opening weekends, not a collapse.
+
+\tabfrag{season_summary}{Season by season vital signs. Athlete counts are
+name-based estimates, and the women's share is measured among individually
+sexed athletes (mixed-gender doubles teams are recorded separately and
+excluded from that column). Season 3 collapsed to a handful of COVID-era
+events, and Season 9 had just begun when the data was collected.}
+
+Figure~\ref{fig:01_participants_per_year} shows the same story by calendar
+year, and the shape is worth pausing on. The 2020 hole is COVID, obviously,
+but the interesting part is what happens afterwards: the recovery does not
+rejoin the old trend line, it launches off a much steeper one. Growth driven
+by a fad usually resets after an interruption. Growth that accelerates
+through an interruption is usually structural. Note also how closely the
+unique-athletes line tracks the results bars, which tells us the boom comes
+from new people arriving rather than the same people racing more often. The
+2026 bar, like Season 9 in the table, is still filling in.
+
+\chart{01_participants_per_year}{Race results per calendar year, with the
+number of distinct athletes behind them. The 2026 bar covers only the opening
+weeks of Season 9.}
+
+The supply side of this growth is the race calendar itself, and it expanded
+just as aggressively. Figure~\ref{fig:01_cities_per_season} counts host
+cities per season: nine in the first year, twelve in the second, then after
+the pandemic 23, 35, 50, 66 and finally 102 in Season 8. Every one of those
+cities needs a hall, tonnes of identical equipment and a local community
+willing to show up, so this curve is the hardest part of the business to
+fake. Figure~\ref{fig:01_top_cities} shows where the accumulated volume
+lives: London leads the all-time list comfortably, thanks to multiple events
+per season and the giant Olympia race weeks, with Germany's original venues
+and the big American cities filling out the list.
+
+\chart{01_cities_per_season}{Distinct host cities per season.}
+
+\chart{01_top_cities}{The 25 biggest host cities by all-time results. London
+has hosted more Hyrox results than any city on earth.}
+
+Figure~\ref{fig:01_city_season_heatmap} adds the time dimension, and it is my
+favourite way to see how young this sport really is. Each row is one of the
+top twenty cities and each column a season, with brightness showing volume.
+Almost every row is dark until Season 5 or 6 and then suddenly lights up.
+Only Hamburg and a couple of other German venues have any meaningful history
+before the pandemic. Most of what we now think of as the sport's flagship
+cities have hosted Hyrox for barely three years.
+
+\chart[width=0.9\linewidth,height=0.58\textheight]{01_city_season_heatmap}{When each big city joined the calendar. Most
+of today's flagship venues only appear from Season 5 onwards.}
+
+Put it all on a map, Figure~\ref{fig:01_world_map}, and the honest summary is
+that Hyrox is a Europe-and-America sport that has started reaching further.
+The colour is deepest across Germany, the UK and the US, with Australia
+strong for its size. The Middle East has a visible foothold, Africa has a
+first one through South Africa, and Asia's presence is young but, as we will
+see shortly, growing at a pace nowhere else can match. Hyrox is global in
+ambition and increasingly global in footprint, but the volume still lives
+overwhelmingly in Europe and North America. The blank patches on this map are
+the next decade of the sport.
+
+\chart[width=\linewidth,height=0.55\textheight]{01_world_map}{All-time results by host country. Europe and the US
+dominate today; the Middle East, Africa and Asia are the expansion frontier.}
+
+That frontier is already visible in the data if you look at athletes rather
+than venues. Figure~\ref{fig:01_emerging_markets} tracks results by athlete
+nationality for five developing markets on a logarithmic scale, which is the
+only scale that can hold them. India went from about 100 results in Season 6
+to 794 in Season 7 to 5{,}861 in Season 8. China went from 65 to more than
+8{,}000 over the same window; South Africa from 123 to about 5{,}500; Mexico,
+the most established of the group, passed 15{,}000. These are growth rates of
+roughly ten times per season, from admittedly small bases. Germany took eight
+seasons to build its volume. If even half of these slopes hold, the sport's
+centre of gravity will look very different in three years, and countries like
+India and China are plausible future superpowers of the sport.
+
+\chart{01_emerging_markets}{Results by athlete nationality for five emerging
+markets, on a log scale. India, China and South Africa are compounding at
+roughly ten times per season.}
+
+% ================================================================== 3
+\section{The formats, and how Doubles took over}
+
+Hyrox is not one race but a family of them, and the balance between the
+formats has shifted in a way I think is the single most important trend in
+the participation data. Figure~\ref{fig:01_participation_by_season_division}
+stacks each season's results by division. For years Open, the classic solo
+race, was the biggest block, but watch the green band overtake it: Doubles,
+where two athletes run every lap together and split the station work between
+them, has grown faster than the solo formats in every post-COVID season, and
+in Season 8 it passed Open outright. Doubles alone drew 305{,}731 Season 8
+results against Open's 268{,}055, and together with Pro Doubles the
+partnered formats now make up 51 percent of the sport. The majority format
+in Hyrox is no longer the individual race. Hyrox has quietly become a team
+sport.
+
+\chart{01_participation_by_season_division}{Season results stacked by
+division. Doubles overtook Open in Season 8, and the partnered formats now
+make up 51 percent of all results.}
+
+Figure~\ref{fig:01_division_growth_rate} makes the comparison explicit. The
+left panel shows each division's absolute size; the right panel shows the
+season-on-season growth rate, which strips out Open's head start. I start
+the growth panel at Season 5 deliberately: the COVID collapse and rebound
+produce meaningless four-digit percentages in Seasons 3 and 4 that would
+squash everything else in the chart into a flat line at the bottom. From
+Season 5 onwards, on a clean comparison, the doubles curves sit above the
+solo curves essentially throughout.
+
+\chart{01_division_growth_rate}{Division size (left) and season-on-season
+growth from Season 5 onwards (right). The COVID rebound seasons are excluded
+from the growth panel because their percentages are meaninglessly large.}
+
+Why does Doubles recruit so well? The clearest answer in the data comes from
+comparing what a partner actually changes, shown in
+Figure~\ref{fig:08_doubles_vs_solo}. The running is untouched: doubles pairs
+run every kilometre together, and their median run total (42:06 for men) is
+almost identical to solo runners' (42:15). The stations are transformed:
+men's wall balls drop from a median of 6:50 solo to 4:18 in doubles, and
+every station shows the same halving pattern, because partners split the
+reps. A doubles race is a solo race with half the strength work, which
+removes exactly the part that intimidates newcomers, and you get to bring a
+friend. It is not hard to see why it is eating the sport, and its social
+nature may also be part of why the field keeps getting more balanced between
+men and women, which is where we turn next.
+
+\chart{08_doubles_vs_solo}{Median segment times, solo versus doubles. Running
+is identical; every station roughly halves. The entire doubles advantage
+comes from shared station work.}
+
+% ================================================================== 4
+\section{Who races: gender, age and nations}
+
+Hyrox likes to describe itself as a sport for everybody, and the demographics
+increasingly back that up. Start with gender,
+Figure~\ref{fig:01_sex_split}. Men still outnumber women, but the share of
+women has risen every single season without exception: 33 percent in Season
+1, 42 percent by Season 8, and the early Season 9 data sits at 45 percent.
+Very few strength-flavoured sports get anywhere near parity, and Hyrox is
+visibly on its way. I suspect the doubles boom is part of the mechanism,
+since mixed and women's pairs lower the entry barrier in exactly the way the
+previous section described, and the standardized, scalable format means women
+compete on the same course with appropriately scaled implements rather than
+in a separate event. Whatever the exact mix of causes, the trend line is one
+of the healthiest in the whole dataset.
+
+\chart{01_sex_split}{Results by sex (left) and women's share of the field
+(right). The share has risen every season, from 33 to 45 percent.}
+
+Age tells a similar story of breadth, with one nuance worth dwelling on.
+Figure~\ref{fig:01_age_distribution} shows the all-time age structure: the
+sport peaks at 30 to 34, the 25 to 39 range dominates the field, and yet the
+masters brackets are enormous, with athletes aged 40 and up contributing
+more than a quarter of all results. Part of the young tilt is simply where
+Hyrox has recently arrived. The newest markets, India among them, skew younger than
+the mature German and British fields, so as those markets grow you would
+expect the sport's age mix to tilt further toward the twenties.
+
+\chart{01_age_distribution}{All-time results by age group and sex. The 25 to
+39 brackets dominate, but more than a quarter of the field is 40 or older.}
+
+To check whether that tilt is actually happening yet, I tracked the age mix
+season by season, Figure~\ref{fig:01_age_growth_by_season}. The answer so
+far is: only slightly. The 25 to 34 core holds around the same share in
+every season, the 16 to 24 slice edges upward a little, and the 45 plus
+share drifts gently down. The mix is remarkably stable for a sport whose
+size has grown thirtyfold over the same window, which tells you the new
+markets are reproducing the sport's demographic shape rather than changing
+it. If the emerging-market growth from the previous section continues, this
+is the chart where I would expect the youth shift to show up first.
+
+\chart{01_age_growth_by_season}{Share of each season's results by age band.
+The mix is stable so far, with a slight tilt toward the youngest band as new
+markets join.}
+
+Nationality completes the picture. Figure~\ref{fig:01_top_nationalities}
+ranks the twenty largest Hyrox nations by athlete count, and the top of the
+list is exactly who you would expect: Germany, the United Kingdom and the
+United States, followed by the Netherlands, France and Australia.
+Figure~\ref{fig:01_nationality_growth} adds the time axis and shows the
+handover: Germany built the sport almost alone through the first two
+seasons, then the British and American curves went vertical after COVID and
+overtook. The sport was invented in Germany, but its growth engine now
+speaks English.
+
+\chart{01_top_nationalities}{The twenty biggest Hyrox nations by all-time
+athlete results.}
+
+\chart{01_nationality_growth}{Results per season for the eight biggest
+nations. Germany started it; the UK and US now drive the volume.}
+
+% ================================================================== 5
+\section{What a finish looks like}
+
+Ask a marathoner what a good time is and they will give you a number.
+Hyrox is young enough that most of its athletes genuinely do not know, and
+social media, which mostly amplifies the fastest one percent, actively
+miscalibrates them. So let me put the real distribution on the table.
+Figure~\ref{fig:02_finish_distribution_open} shows every Open singles finish
+in history. The men's median is 1:27:20 and the women's 1:34:46, a gap of
+about seven and a half minutes. Half of all men finish between 1:17:38 and
+1:39:57, half of all women between 1:24:54 and 1:48:05. If you finish a
+Hyrox anywhere around ninety minutes you are, statistically, a perfectly
+normal athlete in this sport. Notice also the long right tail with no bump
+of stragglers at the end: people having a bad day slow down and grind it
+out rather than blowing up, because the format always lets you walk the
+next run and breathe at the next station.
+
+\chart{02_finish_distribution_open}{All Open singles finishes ever. Men's
+median 1:27:20, women's 1:34:46, with long right tails and no cliff.}
+
+Table~\ref{tab:finish_percentiles} turns that distribution into a lookup:
+find your division, your sex and your time, and read off your all-time
+percentile. Two things in it deserve comment. Doubles is the fastest
+division for the reasons of Section 3. And Pro, the division with the
+heavier weights, is \emph{slower} than Open despite attracting stronger
+athletes, because the extra sled and carry weight costs more time than the
+fitter field gives back. A Pro time and an Open time are simply different
+currencies.
+
+\tabfrag{finish_percentiles}{Finish time percentiles by division and sex,
+all time. Find your time, read your percentile.}
+
+The percentile curve in Figure~\ref{fig:02_percentile_curve} is the
+continuous version, and its shape rewards a moment of study. Through the
+broad middle of the field the curve is almost flat, meaning huge crowds of
+athletes are separated by a minute or two, so a small improvement moves you
+past a lot of people. At the front the curve dives steeply, meaning the
+final percentiles cost enormous amounts of fitness to climb. Improving from
+the 50th to the 25th percentile takes a man from roughly 1:27 to 1:18, which
+is a season of honest training rather than a fantasy.
+
+\chart{02_percentile_curve}{Finish time at every percentile of the all-time
+Open field. Flat through the middle, brutal at the front.}
+
+The community's folk benchmarks look different against this backdrop.
+Figures~\ref{fig:02_benchmark_histogram_m} and
+\ref{fig:02_benchmark_histogram_w} mark them on the men's and women's
+distributions, each label showing the share of the all-time field that beats
+it. Sub-60 for men, the number the sport's culture treats as the badge of
+seriousness, has been achieved in half of one percent of all men's Open
+finishes ever. Sub-70 for women is comparably exclusive at 1.7 percent. Even
+sub-80 for men already puts you in the top third. These numbers are worth
+internalising: the benchmarks are genuinely elite, and a personal best is a
+far more sensible target for almost everyone than a number borrowed from the
+fastest sliver of the sport.
+
+\chart{02_benchmark_histogram_m}{Men's finishes against the classic
+benchmarks. Sub-60 is a top 0.5 percent performance all-time.}
+
+\chart{02_benchmark_histogram_w}{Women's finishes against their benchmarks.
+Sub-70 is a top 1.7 percent performance.}
+
+\subsection{Is the field getting faster or slower?}
+
+Here we reach the most commonly misread statistic in Hyrox. If you plot the
+median finish per season, Figure~\ref{fig:02_median_finish_trend}, it drifts
+slower in every division, and the naive conclusion is that the sport's
+athletes are getting worse. They are not. The median is being dragged by
+composition: every season, hundreds of thousands of first-timers join, and
+first-timers finish mid-pack and behind. When newcomers outnumber veterans
+this heavily, the median measures the growth of the base, not the fitness of
+any individual. The median is up simply because far more people are
+participating.
+
+\chart{02_median_finish_trend}{Median finish per season, by division and
+sex. The drift upward is a composition effect of explosive growth, not
+athletes getting worse.}
+
+To see what is really happening you have to compare like with like.
+Figure~\ref{fig:02_percentile_by_season} overlays the full men's percentile
+curve for several seasons, and instead of shifting up or down, the curve
+\emph{twists}. At the fast end, recent seasons sit below older ones: the
+front 10 percent of the field is faster than it has ever been. At the slow
+end recent seasons sit above: the back half is bigger and slower.
+Figure~\ref{fig:02_field_depth_trend} shows the same thing as three simple
+lines, the 25th, 50th and 75th percentile per season, fanning steadily
+apart. The field is not slowing, it is stretching, exactly the way the
+marathon stretched when it went from an elite pursuit to a bucket-list
+ambition. Both halves of that sentence are signs of health.
+
+\chart{02_percentile_by_season}{Men's Open percentile curves by season. The
+curve twists: faster at the front, longer and slower at the back.}
+
+\chart{02_field_depth_trend}{The 25th, 50th and 75th percentile finish per
+season. The field is stretching, not slowing.}
+
+\subsection{Age and geography}
+
+Two last cuts of the finish data, because both overturn assumptions. First,
+age. Figure~\ref{fig:02_age_curves} plots the median finish by age group,
+and the penalty of ageing is far gentler than most people guess: a median
+man of 50 to 54 finishes in 1:33:32, only about eight and a half minutes
+behind the median 25 to 29 year old's 1:25:03. The curve barely rises
+through the thirties and forties. Hyrox rewards aerobic endurance and
+discipline, which age slowly and respond to training at any age, far more
+than raw speed and power, which do not. For the sport's huge masters field
+this is as encouraging as data gets: deep into your fifties, your training
+matters more than your birth year.
+
+\chart{02_age_curves}{Median finish by age group with the middle 50 percent
+band. A 50 to 54 year old median man concedes only about 8.5 minutes to a
+25 to 29 year old.}
+
+Second, geography. Figure~\ref{fig:02_city_difficulty} ranks the fastest and
+slowest big venues by median finish, and the spread is enormous, roughly 45
+minutes between London Olympia's championship-hardened 1:15 median and
+Bengaluru's 2:00. Course layout, heat and altitude all contribute, but the
+dominant force is simply who shows up: a qualifier venue attracts trained
+veterans while a brand-new market is almost entirely first-timers. This
+chart describes fields more than courses, a distinction that matters again
+when we visit India at the end of the report.
+
+\chart{02_city_difficulty}{Fastest and slowest big venues by median Open
+finish. The 45 minute spread mostly reflects who races there, not course
+difficulty.}
+
+% ================================================================== 6
+\section{The eight stations}
+
+Between the runs sit the eight stations, and the first thing the data does
+is puncture some reputations. Figure~\ref{fig:03_station_medians} shows the
+median time each one costs. Wall balls are the biggest bill at 6:50 for the
+median man, with the sandbag lunges (5:14) and burpee broad jumps (5:31)
+close behind. The sled push, the station everyone fears in advance, takes
+just three minutes, and the farmers carry barely two. Fear and cost are not
+the same thing: the stations that actually eat your race are the long
+grinds in its second half, not the dramatic heavy pushes in its first.
+
+\chart{03_station_medians}{Median time per station in race order. Wall balls
+and lunges cost the most; the feared sled push is one of the shortest.}
+
+Zoom out and Figure~\ref{fig:03_time_budget} shows where a whole median race
+goes: 49 percent running, 43 percent across all eight stations combined,
+and 8 percent in the roxzone, the transition zone between them. Read that
+again, because it is the sentence around which this whole report turns.
+Running is a bigger share of a Hyrox than every station put together, and
+the transitions alone rival any single station. Anyone who trains Hyrox
+primarily as a strength event is optimising the smaller half of their race.
+
+\chart{03_time_budget}{Where the median race goes: about half running, 43
+percent stations, 8 percent transitions.}
+
+The stations also differ wildly in how much they separate athletes.
+Figure~\ref{fig:03_station_spread} shows each station's full spread, and
+Figure~\ref{fig:03_station_variability} condenses it to a single relative
+number. The erg machines are the great levellers: on the row and SkiErg the
+field varies by only 11 to 12 percent, because a rowing machine has a
+mechanical ceiling that even strong athletes cannot push far past. Wall
+balls sit at the other extreme with 41 percent variation, and the slowest
+twentieth of the field needs more than triple the time of the fastest
+twentieth there. The practical reading: you can neither win nor lose much
+on an erg, so pace them steadily and save your heroics; the sleds, lunges
+and wall balls are where races actually move.
+
+\chart{03_station_spread}{Each station's spread, from the 5th to the 95th
+percentile. Wall balls stretch the field more than anything else.}
+
+\chart{03_station_variability}{Relative variability by station. Ergs level
+the field; wall balls and sleds divide it.}
+
+Who loses time where? Figure~\ref{fig:03_elite_vs_field_gap} compares the
+middle and the back of the field against the top five percent, segment by
+segment, and the answer is emphatic: the gaps are smallest on the runs and
+largest on the sleds, the wall balls and the roxzone. Nearly everyone can
+shuffle a kilometre at a survivable pace. What breaks under fatigue and
+inexperience is strength-endurance and transition discipline. If you are
+mid-pack, this chart is your training plan in one picture.
+
+\chart{03_elite_vs_field_gap}{How much slower the middle and back of the
+field are than the top five percent on each segment. The runs separate
+least; sleds, wall balls and transitions separate most.}
+
+The comparison between men and women, Figure~\ref{fig:03_sex_gap_by_station},
+needs careful reading because Hyrox deliberately scales several implements
+by sex, and I have drawn the chart so that the direction is unmissable.
+Green bars pointing left mean women are outright faster: wall balls (women
+throw a lighter ball to a lower target), the lunges and the sled push, all
+scaled stations. Pink bars pointing right mean men are faster, and the
+biggest of those, the sled pull and burpee broad jumps, reflect the
+strength and power differences the scaling does not fully offset. The
+fairest like-for-like comparison is the identical equipment: on the ergs
+the gap is a modest 13 to 16 percent, and on the runs about 13 percent. The
+chart is really a map of where the sport's scaling equalises the sexes by
+design, and it does so remarkably well.
+
+\chart{03_sex_gap_by_station}{Women's median versus men's per segment. Green
+means women are faster (scaled implements); the zero line is parity.}
+
+Finally, Figure~\ref{fig:03_station_trend_by_season} tracks each station's
+median over the seasons, and every one drifts slower. By now you can guess
+why without being told: it is the same first-timer flood that moved the
+overall median, arriving at every station simultaneously. If your own
+splits are improving against this tide, you are making genuine progress.
+
+\chart{03_station_trend_by_season}{Median men's station times by season. The
+drift is the newcomer effect again, visible at every station at once.}
+
+% ================================================================== 7
+\section{Pacing: where races are actually decided}
+
+Strip away the equipment and Hyrox asks one brutally simple question: can
+you run eight kilometres at an even pace while your heart rate lives
+somewhere it should not? Most people cannot, and the data on this is the
+most consistent in the entire archive.
+
+Figure~\ref{fig:04_fatigue_curves} is the centrepiece. It plots the median
+lap time across the eight runs for four groups of finishers, from the top
+five percent of each event to the back twenty. Everyone slows down. The
+difference is how much: the top five percent run their final lap 18 percent
+slower than their first, while the back of the field runs it 48 percent
+slower, finishing at barely half their opening speed. Two athletes with
+identical fresh kilometre times can finish twenty minutes apart purely on
+how gracefully they decay. Durability, not raw speed, is the quantity this
+sport actually tests, and Table~\ref{tab:run_laps_cohort} shows the raw lap
+times behind the curves. Look for the kink at lap five, straight after the
+burpee broad jumps, and the jump at lap eight, straight after the lunges:
+the two stations that most destroy running legs leave fingerprints in
+every cohort's laps, elite and novice alike.
+
+\chart{04_fatigue_curves}{Median lap times by finishing group. The top five
+percent fade 18 percent from first lap to last; the back of the field fades
+48 percent.}
+
+\tabfrag{run_laps_cohort}{The lap times behind the fatigue curves. Note the
+kink after the burpee broad jumps (lap 5) and the jump after the lunges
+(lap 8).}
+
+Where do athletes run their fastest and slowest kilometres?
+Figures~\ref{fig:04_best_lap_position} and \ref{fig:04_worst_lap_position}
+answer bluntly. For 57 percent of the field, lap one is the fastest lap of
+the entire day, and for 64 percent, lap eight is the slowest. The first
+number is a warning dressed as a statistic: a fastest opening lap means you
+arrived at the SkiErg having already spent more than you would ever get
+back. Fresh legs and start-line adrenaline make that lap feel free. It is
+the single most expensive kilometre in the sport.
+
+\chart{04_best_lap_position}{Which lap was each athlete's fastest. For 57
+percent of the field, it is lap one, which is a pacing warning, not an
+achievement.}
+
+\chart{04_worst_lap_position}{Which lap was each athlete's slowest. For 64
+percent it is lap eight, straight off the sandbag lunges.}
+
+The cost of that opening enthusiasm is measurable.
+Figure~\ref{fig:04_degradation_vs_percentile} plots each athlete's
+last-lap fade against where they finished in their event, and the line is
+almost perfectly straight: more fade, worse finish, all the way down the
+field. Figure~\ref{fig:04_consistency_vs_percentile} shows the same
+discipline from another angle, lap-to-lap steadiness. The best finishers
+run like metronomes, varying five to six percent across all eight laps,
+while the back of the field is two to three times as erratic. Surging and
+recovering is metabolically expensive; even effort is a free efficiency
+gain available to anyone willing to run to a plan instead of a feeling.
+
+\chart{04_degradation_vs_percentile}{Last-lap fade against finishing
+percentile: a nearly straight line. Going out too hard is the sport's most
+measurable mistake.}
+
+\chart{04_consistency_vs_percentile}{Lap-to-lap consistency against results.
+Winners vary their laps by five to six percent; the back of the field is far
+more erratic.}
+
+The strongest single piece of evidence is the negative split,
+Figure~\ref{fig:04_negative_split}. Only 11.5 percent of athletes run the
+second four laps faster than the first four, which tells you how rare
+genuine restraint is. Those who manage it finish a median eight percentile
+places higher in their events than everyone else. Holding back when you
+feel strongest goes against every instinct a start line provokes, and it
+demonstrably works.
+
+\chart{04_negative_split}{Only 11.5 percent of athletes run the second half
+faster, and they finish a median eight percentile places higher.}
+
+And then there is the roxzone, the transition area, where
+Figure~\ref{fig:04_roxzone} documents the cheapest time in the sport being
+left on the floor. Front-runners spend about 4:22 of their whole race in
+transit between stations. The back of the field spends nearly thirteen
+minutes. That eight-and-a-half-minute difference involves no exercise at
+all: it is the accumulated cost of standing with hands on knees, walking
+slowly, and hesitating before picking up the next implement. A mid-pack
+athlete who simply moved through the roxzone with purpose would gain more
+time than a month of training buys. Almost nobody does it.
+
+\chart{04_roxzone}{Roxzone time by season and by finishing position. The gap
+between front and back is about eight minutes of pure transition.}
+
+% ================================================================== 8
+\section{What actually makes a fast athlete}
+
+With sixteen timed segments per athlete and a million races, we can ask the
+training question directly: what predicts a Hyrox result? The correlation
+matrix in Figure~\ref{fig:05_correlation_heatmap} gives the first, slightly
+unsettling answer: everything predicts everything. There are no cold cells.
+Athletes fast on the row are fast on the sled and fast on the runs. Hyrox
+has no niches to hide in; it rewards general fitness and punishes any
+weakness, because no strength elsewhere fully pays a weakness's bill.
+
+\chart[width=0.95\linewidth,height=0.58\textheight]{05_correlation_heatmap}{Correlations between all segments. There are
+no low-correlation refuges; the sport punishes weakness anywhere.}
+
+Rank the segments by how strongly they predict the finish,
+Figure~\ref{fig:05_finish_correlations}, and one bar stands clear of the
+rest: total running time correlates 0.91 with the final result, ahead of
+every station. Running wins twice over, since it is also the biggest share
+of the clock, and the reason is physiological: your running reflects the
+aerobic engine that also powers recovery inside and between every station.
+If you can train only one quality for this sport, the data's answer is
+unambiguous. Train running endurance. Figure~\ref{fig:05_variance_by_segment}
+adds the complementary view in raw minutes: running also spreads the field
+by the most total time, and among the stations, wall balls and lunges offer
+the largest pools of winnable time. Running first, the big grinds second:
+the priority order falls straight out of the data.
+
+\chart{05_finish_correlations}{Correlation of each segment with the finish.
+Running, at 0.91, is the best predictor by a clear margin.}
+
+\chart{05_variance_by_segment}{The same idea in minutes: the spread of each
+segment across the field. Running offers the most time, wall balls and
+lunges the most among stations.}
+
+The most interesting chart in this section is the archetype map,
+Figure~\ref{fig:05_archetypes}. Every athlete is placed by running ability
+on one axis and station strength on the other, with colour showing their
+average finishing position. The colour flows along the diagonal, which is
+expected: fast and strong beats slow and weak. The revealing part is the two
+off-diagonal corners. The pure runner with weak stations and the strong
+athlete who cannot run finish at nearly the same middling level, and both
+finish behind a balanced athlete of the same total ability.
+Figure~\ref{fig:05_imbalance_penalty} reduces this to one line: the more
+lopsided an athlete's profile, the worse their average result, steadily and
+without exception. Hyrox taxes specialists. Your weakest quality is exposed
+eight times per race, and the marginal minute is almost always cheaper to
+find in what you are bad at.
+
+\chart{05_archetypes}{Every athlete mapped by running versus station
+ability, coloured by average result. Balance beats specialisation at every
+level.}
+
+\chart{05_imbalance_penalty}{The specialist tax: average result worsens
+steadily as an athlete's run-versus-strength profile gets more lopsided.}
+
+Two more angles complete the picture.
+Figure~\ref{fig:05_run_station_ratio} shows that faster athletes spend a
+\emph{larger} share of their race running, not because they run more, but
+because their station work is so quick that it barely dents the clock; for
+the back of the field the stations swallow the race and the runs become
+recovery jogs. And Figure~\ref{fig:05_consistency_score} measures how even
+each athlete's sixteen segments are relative to the field: the best
+athletes are the most uniform, with no segment far out of line. The elite
+do not have weapons. They have no weaknesses, which is a different and far
+more instructive thing.
+
+\chart{05_run_station_ratio}{Faster athletes spend a larger share of their
+race running, because their stations cost so little.}
+
+\chart{05_consistency_score}{Evenness across all sixteen segments against
+results. The best athletes have no weak link.}
+
+% ================================================================== 9
+\section{The sharp end}
+
+While the middle of the field was being reshaped by growth, the front was
+simply getting faster. Figure~\ref{fig:06_winning_time_trend} tracks the
+median event-winning time per season: for men it fell from 1:04:44 in
+Season 1 to 57:47 in Season 8, with the women's curve falling in parallel.
+Remember that this happened while the median athlete drifted slower, and
+the apparent contradiction dissolves: the two lines measure different
+populations. The median tracks the swelling novice base; the winning time
+tracks a professionalising elite, now training specifically for this sport,
+racing for prize money and sponsorship.
+
+\chart{06_winning_time_trend}{Median event-winning time per season. Winners
+got about seven minutes faster while the median athlete got slower.}
+
+How recently the elite arrived is startling.
+Figure~\ref{fig:06_top200_by_season} shows when the 200 fastest times ever
+were run: almost all of them in the last two seasons. The record book is
+being rewritten in real time, and Tables~\ref{tab:top10_men} and
+\ref{tab:top10_women} name the current authors. Alexander Roncevic's 50:38
+in Cologne leads the men, Lena Putters' 56:53 in Maastricht the women, and
+nearly every entry on both lists comes from Season 7 or 8, most from the
+same handful of championship venues where fast fields gather. On the
+current trajectory, few of these marks will survive long.
+Table~\ref{tab:station_bests} adds the fastest plausible time ever recorded
+on each station, using the 99.9th percentile rather than raw minima because
+the raw records are contaminated by timing-chip glitches (nobody has done
+the burpee broad jumps in nineteen seconds).
+
+\chart{06_top200_by_season}{When the 200 fastest times in history were set:
+overwhelmingly in the last two seasons.}
+
+\tabfrag{top10_men}{The ten fastest men's individual finishes on record, one
+entry per athlete.}
+
+\tabfrag{top10_women}{The ten fastest women's individual finishes on record,
+one entry per athlete.}
+
+\tabfrag{station_bests}{Best plausible segment times in individual racing,
+taken at the 99.9th percentile to filter chip-timing glitches.}
+
+Two consequences of a faster front and a broader base follow directly.
+Figure~\ref{fig:06_elite_field_gap} shows the distance between the top one
+percent and the median athlete widening season after season, the sport
+stratifying the way running did as it matured. And
+Figure~\ref{fig:06_benchmark_share} resolves an apparent paradox: even as
+the absolute number of fast athletes grows, sub-60 men and sub-70 women
+shrink as a \emph{share} of the field, because the denominator of newcomers
+grows faster still. Percentages and counts can point in opposite directions
+during rapid growth, and here they do.
+
+\chart{06_elite_field_gap}{Minutes between the top one percent and the
+median athlete, widening every season.}
+
+\chart{06_benchmark_share}{Benchmark finishes as a share of the field. The
+elite deepens in absolute terms while diluting as a percentage.}
+
+I want to close this section with what I find the most instructive chart in
+the report, Figure~\ref{fig:06_elite_time_budget}. It compares how the ten
+fastest men in history distribute their race time against the median male
+field, each as a share of their own total. The two bars are almost
+identical: about half running, the same station proportions, the same
+transition share. The world's best have no secret allocation, no exotic
+pacing model, no re-balanced race. They are simply faster everywhere, in
+the same shape as everyone else. There is no shortcut to reverse-engineer,
+and in a sport this young, that is strangely liberating: the path forward
+for everyone is the same, raise the whole profile.
+
+\chart{06_elite_time_budget}{The top ten men all-time and the median field
+distribute their race time almost identically. Elites are uniformly faster,
+not differently balanced.}
+
+% ================================================================== 10
+\section{Careers: what happens after the first race}
+
+Because athletes are tracked by name, the numbers in this section are
+careful estimates rather than exact accounting, but the patterns are far too
+large to be artifacts. Start with the uncomfortable one:
+Figure~\ref{fig:07_races_per_athlete} shows that about 69 percent of
+singles athletes appear exactly once. Each further start is roughly half as
+common as the previous one. Hyrox is spectacular at recruiting and much
+weaker at retaining, and the sport's growth currently runs on a treadmill
+of first-timers.
+
+\chart{07_races_per_athlete}{Races per athlete. About seven in ten singles
+athletes have raced exactly once.}
+
+The irony is that coming back pays quickly and reliably.
+Figure~\ref{fig:07_improvement_curve} and Table~\ref{tab:improvement} track
+repeat racers against their own debut: a median 1.3 minutes faster by race
+two, three minutes by race four, and 4.5 minutes by race eight, with most
+of the gain banked in the first three or four starts. Early improvement is
+cheap because a first Hyrox is as much a lesson as a fitness test; simply
+knowing how to pace lap one and move through the roxzone is worth minutes.
+Figure~\ref{fig:07_career_traj_pct} shows the deeper version: measured in
+field position rather than minutes, repeaters keep climbing even after
+their raw times level off, and remember they are climbing through a field
+whose front end is itself improving. Racecraft compounds.
+
+\chart{07_improvement_curve}{Median improvement versus each athlete's first
+race. About 4.5 minutes by race eight, most of it banked early.}
+
+\tabfrag{improvement}{Career improvement in minutes against each athlete's
+debut. Negative numbers mean faster.}
+
+\chart{07_career_traj_pct}{The same careers measured in field percentile.
+Position keeps improving even after raw times plateau.}
+
+Figure~\ref{fig:07_pb_rate} translates this into the sport's favourite
+currency, the personal best, or PB: an athlete's fastest Hyrox finish so
+far. More than half of all second races produce one. By race eight, fewer
+than a third do. Early PBs are nearly automatic because the bar is a single
+previous attempt; late PBs must be earned against your own accumulated
+best, which makes a veteran's PB at race eight a rarer and more impressive
+thing than the near-guaranteed one at race two.
+
+\chart{07_pb_rate}{The share of athletes setting a personal best (PB, their
+fastest Hyrox so far) at each race of their career.}
+
+Retention, Figure~\ref{fig:07_retention} and Table~\ref{tab:retention}, has
+settled just under 40 percent season over season, which is genuinely strong
+for an event this punishing. But because each incoming cohort is so
+enormous, even 40 percent retention leaves every season numerically
+dominated by debutants. Both facts are true at once: the sport keeps its
+people reasonably well, and it still grows almost entirely by recruiting
+new ones. Converting more one-timers into second-timers, with that
+near-guaranteed PB as the carrot, is the highest-leverage growth move the
+sport has. Table~\ref{tab:most_active} shows the other extreme, the
+archive's most prolific racers with dozens of starts, statistical outliers
+who form the connective tissue of every local Hyrox community.
+
+\chart{07_retention}{Share of each season's athletes who raced again the
+following season, settling just under 40 percent.}
+
+\tabfrag{retention}{Retention by season transition. The Season 8 to 9
+transition is excluded because Season 9 has barely begun.}
+
+\tabfrag{most_active}{The most prolific singles racers in the archive.}
+
+Which nations produce the fastest athletes? Figure~\ref{fig:07_nationality_performance}
+ranks countries by their median athlete, and the podium is Portugal
+(1:21:21), Spain and Ireland rather than the giant markets. The explanation
+is composition once more: Germany, Britain and America bring hundreds of
+thousands of casual first-timers, while smaller travelling contingents are
+self-selected enthusiasts. This chart measures who signs up, not national
+fitness. And Figure~\ref{fig:07_nationality_diversity} counts nationalities
+per season, from 46 in the first winter to more than 220 now, which is more
+than most Olympic sports can claim. Whatever else is true, the reach is
+real.
+
+\chart{07_nationality_performance}{Nations ranked by their median athlete's
+finish. Small, self-selected contingents beat giant casual markets.}
+
+\chart{07_nationality_diversity}{Athlete nationalities per season: 46 in
+Season 1, more than 220 today.}
+
+% ================================================================== 11
+\section{Three more questions the splits can answer}
+
+A few analyses did not fit the main narrative but are too good to leave
+out. First, ageing by movement. Figure~\ref{fig:08_age_station_heatmap}
+shows how much slower each station gets across the age brackets, and the
+gradient is a small physiology lesson: the explosive stations, burpee broad
+jumps and wall balls, degrade fastest with age, while the erg machines
+barely age at all. Power leaves before endurance does. For a masters
+athlete the chart doubles as a training plan: defend the explosive stations
+that time is quietly taxing, and lean on the aerobic ones where the years
+cost almost nothing.
+
+\chart[width=0.95\linewidth,height=0.58\textheight]{08_age_station_heatmap}{How each station slows with age. Explosive
+stations age fastest; the ergs barely age at all.}
+
+Second, a shortcut fitness test. Figure~\ref{fig:08_best_run_lap} relates
+each athlete's single fastest kilometre of the day to their overall finish,
+and the correlation is 0.79. One flat-out kilometre, buried anywhere in the
+race, predicts the whole result remarkably well, because it exposes the
+same aerobic engine everything else runs on. If you want to estimate your
+Hyrox potential without racing one, a hard standalone kilometre is a
+legitimate, nearly free proxy.
+
+\chart{08_best_run_lap}{An athlete's best single kilometre predicts their
+whole race with a correlation of 0.79.}
+
+Third, how the race changes shape as you move back through the field.
+Figure~\ref{fig:08_time_allocation_by_cohort} splits each finishing group's
+race into running, stations and transitions: from front to back, the
+station and roxzone share grows steadily at running's expense. And
+Figure~\ref{fig:08_station_position_effect} runs the cleanest control in
+the report, normalising every athlete's stations against their own average,
+which removes fitness from the equation entirely. Even then, the late-race
+grind stations stand out as relatively slowest for everyone. The second
+half of a Hyrox is shaped by accumulated fatigue, not by which movements
+anyone happens to be good at, which is one more reason the pacing chapter
+matters more than any station-specific trick.
+
+\chart{08_time_allocation_by_cohort}{How each finishing group's race splits
+between running, stations and transitions. Slower athletes' races are
+swallowed by the stations.}
+
+\chart{08_station_position_effect}{Each athlete's stations normalised
+against their own average. Late-race stations are relatively slowest for
+everyone; fatigue, not skill, shapes the second half.}
+
+% ================================================================== 12
+\section{The rise of Mixed Doubles}
+
+One corner of the doubles boom deserves its own look, with an important
+caveat attached from the outset: the scraped archive does not capture every
+mixed-gender team, so the numbers here are a partial, indicative view rather
+than a complete count. With that firmly in mind,
+Figure~\ref{fig:08_mixed_doubles_overview} breaks the doubles field we can
+see into its three categories, teams of two men, two women, or one of each.
+Among the entries we have, mixed teams make up roughly a quarter of doubles,
+with same-sex pairs taking the larger shares. Because the true figure is
+almost certainly higher than what the archive records, and because doubles is
+now the sport's biggest format overall, mixed racing is clearly a meaningful
+slice of Hyrox rather than a niche. The right panel maps where these teams
+race, again only among the records we hold: the United States, Germany and
+the United Kingdom host the most, with Spain and France close behind, which
+points to a broadly Western spread across the big markets. The appeal is easy
+to understand whatever the exact totals turn out to be. A mixed team is one
+of the most accessible ways into the sport, a couple or a pair of friends
+splitting the workload over the same course, and it plausibly helps explain
+why doubles has pulled ahead of solo racing.
+
+\chart{08_mixed_doubles_overview}{The doubles field split by team gender
+(left) and host countries for mixed teams (right). Mixed-doubles coverage in
+the archive is incomplete, so read both panels as indicative rather than
+exact.}
+
+% ================================================================== 13
+\section{A view from India}
+
+I want to end close to home. India has hosted Hyrox in three cities so far,
+Mumbai from Season 7, then Bengaluru and Delhi joining in Season 8, and
+these races show both how new and how different the Indian market still is.
+Figure~\ref{fig:08_india_vs_world_participation} shows pure growth: Mumbai's debut drew
+around 1{,}000 results, and one season later the three Indian venues together
+drew about 8{,}000. Add the nationality trend from
+Figure~\ref{fig:01_emerging_markets}, Indian athletes going from 100
+results in Season 6 to nearly 6{,}000 in Season 8, and India is on the
+steepest growth curve of any major market in the sport.
+
+\chart{08_india_vs_world_finish}{Indian venues against the world: finish distributions for Mumbai and Bengaluru versus the global field.}
+
+\chart{08_india_vs_world_participation}{Participation at Indian venues by season.}
+
+Figure~\ref{fig:08_india_vs_world_finish} shows the flip side of that youth. Mumbai's median Open
+finish is 1:54:08 and Bengaluru's 2:00:35, against a world median of
+1:29:55, which also makes Bengaluru the slowest large venue on earth by
+median (Figure~\ref{fig:02_city_difficulty}). It would be easy to misread
+that as a verdict. It is a timestamp. A field made almost entirely of
+first-timers finishes where first-timers finish everywhere, and every
+mature Hyrox market once looked like this. The career section showed what
+happens next: second races are 1.3 minutes faster on median and over half
+of them are personal bests. As Indian athletes rack up starts, and as the
+sport reaches a country full of exactly the young 25 to 34 demographic
+that dominates Hyrox globally, those medians will fall fast.
+
+Finally, Figure~\ref{fig:08_india_vs_world_mixed_doubles} hints at a
+different flavour to the Indian doubles field: among the entries the archive
+records, mixed teams sit a little higher in India than in the world as a
+whole, alongside a noticeably larger share of men's pairs. As with the global
+mixed-doubles numbers above, coverage of these teams is incomplete, so this is
+a suggestive comparison rather than a firm one. Either way, the interesting
+question about India is not why its medians are slow today; it is how quickly
+this young market will mature.
+
+\chart{08_india_vs_world_mixed_doubles}{Mixed Doubles popularity in India versus the rest of the world.}
+
+% ================================================================== 14
+\section{What I take away, and what to be careful about}
+
+Three ideas kept resurfacing no matter which direction I sliced a million
+results.
+
+Hyrox is a pacing exam wearing a strongman costume. Half the race is
+running, running predicts the result better than anything else, the
+biggest gaps between finishing groups appear in fade, steadiness and
+transitions, and the world's best allocate their race exactly like everyone
+else while executing every part faster. Nothing about winning this sport is
+glamorous. The athletes who beat you slowed down less than you did.
+
+The sport is becoming two sports in one, healthily. The front of the field
+professionalised, taking seven minutes off winning times in eight seasons,
+while the base broadened so fast that medians drifted the other way.
+Doubles is on course to overtake solo racing, women are approaching parity,
+and the emerging markets, India, China and South Africa above all, are
+compounding at rates the mature markets never saw. Europe and the US
+dominate today; the map itself says that will not remain the whole story.
+
+And the next frontier is the second race. Seven in ten athletes never come
+back, yet returners improve by minutes and PB more than half the time.
+No lever in the sport is worth more than converting the first-timer who
+just discovered they could finish.
+
+\subsection*{What to be careful about}
+
+Everything above rests on data that was publicly scrapable from Hyrox's
+results servers, and that has consequences worth restating plainly. This is
+not an official export and Hyrox has not verified any of it. Athletes who
+started but did not finish are largely absent, so nothing here should be
+read as a completion or dropout rate. Careers are tracked by athlete name
+and sex, so same-named athletes occasionally merge and renamed athletes
+split, making all career figures estimates. City comparisons mix course,
+climate and, above all, field composition, and cannot separate them.
+Roxzone times are partly derived where the archive omits them. Mixed-gender
+doubles are only partially captured, so every mixed-doubles figure in
+Section~12 and the India comparison is a lower bound and indicative view
+rather than a complete count. Season 9 was a few weekends old at collection
+time and is marked as partial wherever it appears. And the station records
+use the 99.9th percentile because the raw minima contain physically
+impossible chip glitches. None of these caveats threatens the report's main
+conclusions, which rest on patterns spanning hundreds of thousands of
+athletes, but precise small numbers deserve a grain of salt.
+
+\appendix
+
+% ================================================================== A
+\section{Appendix: reference tables}
+
+The table below is the complete segment reference behind the report: median
+times for every station plus running and roxzone totals, by division and
+sex, computed over all clean races. Pick your division and sex and every
+median becomes a concrete benchmark for your next race.
+
+\tabfrag{station_stats}{Median segment times by division and sex, clean
+races, all time.}
+
+\end{document}

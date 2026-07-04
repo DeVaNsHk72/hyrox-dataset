@@ -23,5 +23,12 @@ __pycache__/
 .venv/
 venv/
 
+# dataset outputs (too large for git — hosted separately)
+by_event/
+hyrox_full.*
+hyrox_results.*
+hyrox_clean.*
+hyrox_granular_timing.*
+
 # system
 .DS_Store

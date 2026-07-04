@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYROX Analytics — Complete Race Intelligence</title>
+    <meta name="description" content="Comprehensive analysis of 1.4M+ Hyrox race results across every season, city, and division ever run.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-card-hover: #ffffff;
+            --border: #e2e8f0;
+            --border-hover: rgba(2, 132, 199, 0.4);
+            --text: #334155;
+            --text-dim: #64748b;
+            --text-bright: #0f172a;
+            --accent: #0284c7;
+            --accent2: #7c3aed;
+            --accent3: #db2777;
+            --success: #059669;
+            --warn: #d97706;
+            --danger: #dc2626;
+            --sidebar-w: 260px;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 10% 20%, rgba(56, 189, 248, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 90% 80%, rgba(139, 92, 246, 0.08), transparent),
+                radial-gradient(ellipse 50% 30% at 50% 50%, rgba(244, 114, 182, 0.04), transparent);
+            z-index: -1;
+            animation: bgPulse 15s ease-in-out infinite alternate;
+        }
+        @keyframes bgPulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(24px);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.25rem;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar .logo {
+            font-size: 1.35rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+        .sidebar .logo-sub {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+        }
+        .nav-section {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .nav-links { list-style: none; }
+        .nav-links li { margin-bottom: 2px; }
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.75rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(2, 132, 199, 0.08);
+            color: var(--accent);
+        }
+        .nav-links a .nav-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.4;
+        }
+        .nav-links a.active .nav-dot { opacity: 1; background: var(--accent); }
+
+        /* Hamburger */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 1rem; left: 1rem;
+            z-index: 200;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+        }
+        .hamburger span {
+            display: block;
+            width: 20px; height: 2px;
+            background: var(--text);
+            margin: 4px 0;
+            transition: 0.3s;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .hamburger { display: block; }
+            .main { margin-left: 0 !important; }
+        }
+
+        /* ---- MAIN ---- */
+        .main {
+            margin-left: var(--sidebar-w);
+            padding: 0;
+        }
+
+        /* ---- HERO ---- */
+        .hero {
+            padding: 4rem 3rem 3rem;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(139, 92, 246, 0.05));
+            border-bottom: 1px solid var(--border);
+        }
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            max-width: 55ch;
+            line-height: 1.6;
+        }
+
+        /* Hero stats */
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            backdrop-filter: blur(12px);
+        }
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-bright);
+            line-height: 1;
+        }
+        .stat-card .stat-label {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.35rem;
+        }
+        .stat-card:nth-child(1) .stat-value { color: var(--accent); }
+        .stat-card:nth-child(2) .stat-value { color: var(--accent2); }
+        .stat-card:nth-child(3) .stat-value { color: var(--success); }
+        .stat-card:nth-child(4) .stat-value { color: var(--accent3); }
+        .stat-card:nth-child(5) .stat-value { color: var(--warn); }
+
+        /* ---- SECTIONS ---- */
+        section {
+            padding: 3rem;
+            scroll-margin-top: 2rem;
+        }
+        section + section {
+            border-top: 1px solid var(--border);
+        }
+        .section-header {
+            margin-bottom: 2rem;
+        }
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.4rem;
+        }
+        .section-header .badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+        .badge-blue { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+        .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent2); }
+        .badge-pink { background: rgba(244, 114, 182, 0.15); color: var(--accent3); }
+        .badge-green { background: rgba(52, 211, 153, 0.15); color: var(--success); }
+        .badge-yellow { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+        .badge-red { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+
+        .section-header .subtitle {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 65ch;
+        }
+
+        /* ---- GRID ---- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 1.5rem;
+        }
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            section { padding: 1.5rem; }
+            .hero { padding: 3rem 1.5rem 2rem; }
+            .hero h1 { font-size: 1.8rem; }
+        }
+
+        /* ---- CARDS ---- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            backdrop-filter: blur(16px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
+        }
+        .card-full { grid-column: 1 / -1; }
+        .card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin-bottom: 1rem;
+        }
+        .card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            display: block;
+            background: #fff;
+            padding: 0.5rem;
+            cursor: zoom-in;
+            transition: opacity 0.2s;
+        }
+        .card img:hover { opacity: 0.92; }
+        .card-text {
+            margin-top: 0.75rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .card-text strong { color: var(--text); }
+
+        /* ---- LIGHTBOX ---- */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            cursor: zoom-out;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s;
+        }
+        .lightbox.active { display: flex; }
+        .lightbox img {
+            max-width: 92vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ---- DATA TABLES ---- */
+        .data-table-wrap {
+            overflow-x: auto;
+            margin-top: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .data-table th {
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            padding: 0.65rem 0.8rem;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+        .data-table td {
+            padding: 0.55rem 0.8rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+        .data-table tr:hover td {
+            background: rgba(56, 189, 248, 0.03);
+            color: var(--text);
+        }
+
+        /* ---- FOOTER ---- */
+        .footer {
+            padding: 2rem 3rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hamburger -->
+    <button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('open')" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">HYROX Analytics</div>
+        <div class="logo-sub">Race Intelligence Platform</div>
+
+        <div class="nav-section">Overview</div>
+        <ul class="nav-links">
+            <li><a href="#participation" class="active"><span class="nav-dot"></span>Participation & Growth</a></li>
+            <li><a href="#finish-times"><span class="nav-dot"></span>Finish Times</a></li>
+        </ul>
+        <div class="nav-section">Race Breakdown</div>
+        <ul class="nav-links">
+            <li><a href="#stations"><span class="nav-dot"></span>Station Splits</a></li>
+            <li><a href="#pacing"><span class="nav-dot"></span>Pacing & Fatigue</a></li>
+            <li><a href="#drivers"><span class="nav-dot"></span>Performance Drivers</a></li>
+        </ul>
+        <div class="nav-section">Elite & Athlete</div>
+        <ul class="nav-links">
+            <li><a href="#elites"><span class="nav-dot"></span>The Sharp End</a></li>
+            <li><a href="#athletes"><span class="nav-dot"></span>Athlete Careers</a></li>
+        </ul>
+        <div class="nav-section">Deep Dive</div>
+        <ul class="nav-links">
+            <li><a href="#deep-dive"><span class="nav-dot"></span>Advanced Analysis</a></li>
+        </ul>
+    </aside>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+        <img id="lightbox-img" src="" alt="Zoomed chart">
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Hero -->
+        <div class="hero">
+            <h1>The <span class="gradient">Complete Analysis</span><br>of Every Hyrox Race Ever Run</h1>
+            <p>1.4 million results. 9 seasons. Every city, division, station, and split — dissected, correlated, and visualized.</p>
+            <div class="hero-stats">
+                <div class="stat-card"><div class="stat-value">1.18M</div><div class="stat-label">Unique Results</div></div>
+                <div class="stat-card"><div class="stat-value">9</div><div class="stat-label">Seasons Analyzed</div></div>
+                <div class="stat-card"><div class="stat-value">926K</div><div class="stat-label">Clean Race Rows</div></div>
+                <div class="stat-card"><div class="stat-value">68</div><div class="stat-label">Data Columns</div></div>
+                <div class="stat-card"><div class="stat-value">55+</div><div class="stat-label">Charts Generated</div></div>
+            </div>
+        </div>
+
+        <!-- 01 Participation -->
+        <section id="participation">
+            <div class="section-header">
+                <span class="badge badge-blue">01</span>
+                <h2>Participation & Demographics</h2>
+                <p class="subtitle">Exploring the explosive growth of Hyrox from a niche European event to a global fitness phenomenon.</p>
+            </div>
+            <div class="grid">
+                <div class="card card-full">
+                    <h3>Participants Per Year</h3>
+                    <img src="output/figures/01_participants_per_year.png" alt="Participants per Year" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Total participation by calendar year (excluding the current incomplete season).</p>
+                </div>
+                <div class="card card-full">
+                    <h3>Global Expansion Map</h3>
+                    <img src="output/figures/01_world_map.png" alt="World Map" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Hyrox has expanded from a European base to a truly global phenomenon, with massive growth in the UK and USA.</p>
+                </div>
+                <div class="card">
+                    <h3>Season Growth by Division</h3>
+                    <img src="output/figures/01_participation_by_season_division.png" alt="Participation by Season" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Hyrox has seen <strong>exponential growth</strong>. The OPEN division remains the largest, but DOUBLES is rapidly catching up, revealing the social DNA of the sport.</p>
+                </div>
+                <div class="card">
+                    <h3>Division YoY Growth Rate</h3>
+                    <img src="output/figures/01_division_growth_rate.png" alt="Division Growth Rate" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Year-over-year growth percentage for each division — showing which formats are accelerating.</p>
+                </div>
+                <div class="card">
+                    <h3>Global Expansion: Cities per Season</h3>
+                    <img src="output/figures/01_cities_per_season.png" alt="Cities per Season" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The number of host cities has skyrocketed, bringing Hyrox from a European event to a <strong>truly global sport</strong>.</p>
+                </div>
+                <div class="card card-full">
+                    <h3>Top 25 Cities by Participation</h3>
+                    <img src="output/figures/01_top_cities.png" alt="Top Cities" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card card-full">
+                    <h3>City × Season Heatmap</h3>
+                    <img src="output/figures/01_city_season_heatmap.png" alt="City Season Heatmap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Top 20 cities by participation density across seasons — revealing which cities are the <strong>heartlands</strong> of Hyrox.</p>
+                </div>
+                <div class="card">
+                    <h3>Gender Split Over Time</h3>
+                    <img src="output/figures/01_sex_split.png" alt="Sex Split" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Female participation has steadily risen, making Hyrox one of the <strong>most gender-balanced</strong> mass-participation fitness events.</p>
+                </div>
+                <div class="card">
+                    <h3>Top Nationalities</h3>
+                    <img src="output/figures/01_top_nationalities.png" alt="Top Nationalities" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Nationality Growth Trends</h3>
+                    <img src="output/figures/01_nationality_growth.png" alt="Nationality Growth" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Age Distribution</h3>
+                    <img src="output/figures/01_age_distribution.png" alt="Age Distribution" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The 30-34 age group dominates, but strong participation continues well into the 50s and beyond.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 02 Finish Times -->
+        <section id="finish-times">
+            <div class="section-header">
+                <span class="badge badge-purple">02</span>
+                <h2>Finish Times & Difficulty</h2>
+                <p class="subtitle">How long does it take? Distributions, percentile curves, age-performance curves, and city-by-city difficulty rankings.</p>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h3>Open Division Finish Distribution</h3>
+                    <img src="output/figures/02_finish_distribution_open.png" alt="Finish Distribution" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The bell curve of finish times with median markers. Men typically finish around <strong>1:25-1:30</strong>, women around <strong>1:35-1:45</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Finish by Division & Sex</h3>
+                    <img src="output/figures/02_finish_by_division.png" alt="Finish by Division" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Men's Benchmark Histogram</h3>
+                    <img src="output/figures/02_benchmark_histogram_m.png" alt="Benchmark Men" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">What percentage of men finish <strong>sub-60, sub-70, sub-80, sub-90</strong>? The benchmark lines tell the story.</p>
+                </div>
+                <div class="card">
+                    <h3>Women's Benchmark Histogram</h3>
+                    <img src="output/figures/02_benchmark_histogram_w.png" alt="Benchmark Women" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card card-full">
+                    <h3>Field Depth Trend — P25 / Median / P75 by Season</h3>
+                    <img src="output/figures/02_field_depth_trend.png" alt="Field Depth Trend" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Are <strong>all tiers</strong> getting faster, or just the top? Track the 25th, 50th, and 75th percentile across seasons.</p>
+                </div>
+                <div class="card">
+                    <h3>Percentile Curves by Season</h3>
+                    <img src="output/figures/02_percentile_by_season.png" alt="Percentile by Season" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Overlay of the full finish-time curve from different seasons — the <strong>entire distribution</strong> is shifting left (faster).</p>
+                </div>
+                <div class="card">
+                    <h3>"What's a Good Time?" — Percentile Curve</h3>
+                    <img src="output/figures/02_percentile_curve.png" alt="Percentile Curve" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card card-full">
+                    <h3>Age Curves: Peak Performance</h3>
+                    <img src="output/figures/02_age_curves.png" alt="Age Curves" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Performance peaks in the <strong>late 20s to early 30s</strong>. The shaded band shows the interquartile range.</p>
+                </div>
+                <div class="card">
+                    <h3>City Difficulty</h3>
+                    <img src="output/figures/02_city_difficulty.png" alt="City Difficulty" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Not all venues are created equal. <strong>Course layout, flooring, and climate</strong> all impact median finish times.</p>
+                </div>
+                <div class="card">
+                    <h3>Median Finish Trend by Season</h3>
+                    <img src="output/figures/02_median_finish_trend.png" alt="Median Finish Trend" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+            </div>
+        </section>
+
+        <!-- 03 Stations -->
+        <section id="stations">
+            <div class="section-header">
+                <span class="badge badge-green">03</span>
+                <h2>Station Splits</h2>
+                <p class="subtitle">Breaking down the 8 functional stations. Where does the time go, and where is the race won or lost?</p>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h3>Median Station Times</h3>
+                    <img src="output/figures/03_station_medians.png" alt="Station Medians" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Time Budget — Where the Race Goes</h3>
+                    <img src="output/figures/03_time_budget.png" alt="Time Budget" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Running makes up ~50% of the race. Among stations, <strong>Wall Balls and Lunges</strong> consume the most time.</p>
+                </div>
+                <div class="card">
+                    <h3>Station Spread (5th–95th Percentile)</h3>
+                    <img src="output/figures/03_station_spread.png" alt="Station Spread" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Station Variability (CV%)</h3>
+                    <img src="output/figures/03_station_variability.png" alt="Station Variability" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text"><strong>Sled Push and Wall Balls</strong> have the highest CV — these stations separate the field the most.</p>
+                </div>
+                <div class="card card-full">
+                    <h3>Elite vs. Field Gap</h3>
+                    <img src="output/figures/03_elite_vs_field_gap.png" alt="Elite vs Field Gap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Where do the top 5% gain their advantage? The <strong>percentage slower</strong> chart reveals which stations separate the back of the pack from the front.</p>
+                </div>
+                <div class="card">
+                    <h3>Sex Gap by Station</h3>
+                    <img src="output/figures/03_sex_gap_by_station.png" alt="Sex Gap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Station Trends by Season</h3>
+                    <img src="output/figures/03_station_trend_by_season.png" alt="Station Trend" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Are athletes getting faster on specific stations over time?</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 04 Pacing -->
+        <section id="pacing">
+            <div class="section-header">
+                <span class="badge badge-yellow">04</span>
+                <h2>Pacing & Fatigue</h2>
+                <p class="subtitle">Hyrox is a game of pacing. How do athletes manage the 8×1km runs sandwiched between heavy functional work?</p>
+            </div>
+            <div class="grid">
+                <div class="card card-full">
+                    <h3>Fatigue Curves (Run Laps 1–8)</h3>
+                    <img src="output/figures/04_fatigue_curves.png" alt="Fatigue Curves" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Almost everyone slows down. The <strong>Top 5% fade ~10-15%</strong> from Lap 1 to Lap 8, while the Back 20% can fade <strong>over 40%</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Degradation vs. Percentile</h3>
+                    <img src="output/figures/04_degradation_vs_percentile.png" alt="Degradation" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Faster athletes pace dramatically better. The relationship is <strong>nearly linear</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Run-Lap Consistency vs. Result</h3>
+                    <img src="output/figures/04_consistency_vs_percentile.png" alt="Consistency" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Roxzone (Transition) Cost</h3>
+                    <img src="output/figures/04_roxzone.png" alt="Roxzone" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Elites sprint through the Roxzone. Many use it for <strong>recovery — costing up to 5+ minutes</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Best Lap Position</h3>
+                    <img src="output/figures/04_best_lap_position.png" alt="Best Lap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">When is an athlete's fastest 1km? Overwhelmingly <strong>Lap 1</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Worst Lap Position</h3>
+                    <img src="output/figures/04_worst_lap_position.png" alt="Worst Lap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The slowest lap? Almost always the <strong>last two laps</strong> — fatigue is real.</p>
+                </div>
+                <div class="card card-full">
+                    <h3>Negative Split Analysis</h3>
+                    <img src="output/figures/04_negative_split.png" alt="Negative Split" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">How rare is it to run the 2nd half faster than the 1st? And does it actually lead to better results?</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 05 Drivers -->
+        <section id="drivers">
+            <div class="section-header">
+                <span class="badge badge-pink">05</span>
+                <h2>Performance Drivers</h2>
+                <p class="subtitle">What correlates strongest with a fast finish? Examining the underlying mechanics of a successful Hyrox race.</p>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h3>Correlation Heatmap</h3>
+                    <img src="output/figures/05_correlation_heatmap.png" alt="Correlation Heatmap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">How different segments correlate with each other — <strong>strong runners tend to also be strong rowers</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Segment → Finish Correlation</h3>
+                    <img src="output/figures/05_finish_correlations.png" alt="Finish Correlations" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text"><strong>Running total</strong> has the highest correlation with finish time. Among stations, Wall Balls and Lunges are most predictive.</p>
+                </div>
+                <div class="card">
+                    <h3>Variance by Segment</h3>
+                    <img src="output/figures/05_variance_by_segment.png" alt="Variance" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Run-to-Station Ratio by Percentile</h3>
+                    <img src="output/figures/05_run_station_ratio.png" alt="Run Station Ratio" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Does the balance between running and stations shift at different performance levels?</p>
+                </div>
+                <div class="card card-full">
+                    <h3>Athlete Archetypes</h3>
+                    <img src="output/figures/05_archetypes.png" alt="Archetypes" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Runners vs strength specialists. The <strong>green center proves balanced athletes finish best</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Imbalance Penalty</h3>
+                    <img src="output/figures/05_imbalance_penalty.png" alt="Imbalance Penalty" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Being a specialist <strong>hurts</strong>. Athletes with massive run/strength imbalance finish significantly worse.</p>
+                </div>
+                <div class="card">
+                    <h3>Overall Consistency Score</h3>
+                    <img src="output/figures/05_consistency_score.png" alt="Consistency Score" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">A single metric capturing how balanced an athlete is across all 16 segments (8 runs + 8 stations).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 06 Elites -->
+        <section id="elites">
+            <div class="section-header">
+                <span class="badge badge-red">06</span>
+                <h2>The Sharp End — Elites & Records</h2>
+                <p class="subtitle">The pinnacle of the sport: winning times, all-time rankings, records that keep falling, and how the elite distribute their effort.</p>
+            </div>
+            <div class="grid">
+                <div class="card card-full">
+                    <h3>Winning Time Trend</h3>
+                    <img src="output/figures/06_winning_time_trend.png" alt="Winning Time Trend" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The sport is getting <strong>remarkably faster every season</strong> as training methodology evolves.</p>
+                </div>
+                <div class="card">
+                    <h3>Top 200 Performances by Season</h3>
+                    <img src="output/figures/06_top200_by_season.png" alt="Top 200" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The density of elite performances. The time required to break into the <strong>all-time top 200 gets harder every year</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Benchmark Share Trend</h3>
+                    <img src="output/figures/06_benchmark_share.png" alt="Benchmark Share" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The % of finishers hitting sub-60 (men) and sub-70 (women) benchmarks each season.</p>
+                </div>
+                <div class="card">
+                    <h3>Elite vs. Median Gap Over Time</h3>
+                    <img src="output/figures/06_elite_field_gap.png" alt="Elite Field Gap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card card-full">
+                    <h3>Time Budget: Elites vs. Field</h3>
+                    <img src="output/figures/06_elite_time_budget.png" alt="Elite Time Budget" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Pie chart breakdown of how the <strong>all-time top 10</strong> distribute their time compared to the average finisher.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 07 Athletes -->
+        <section id="athletes">
+            <div class="section-header">
+                <span class="badge badge-blue">07</span>
+                <h2>Athlete Careers</h2>
+                <p class="subtitle">Repeat racing, retention, improvement trajectories, PB rates, and the global diversity of the Hyrox community.</p>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h3>Races Per Athlete</h3>
+                    <img src="output/figures/07_races_per_athlete.png" alt="Races per Athlete" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Most athletes race once. But a dedicated core returns <strong>season after season</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Season-over-Season Retention</h3>
+                    <img src="output/figures/07_retention.png" alt="Retention" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Raw Improvement Curve</h3>
+                    <img src="output/figures/07_improvement_curve.png" alt="Improvement Curve" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">How many minutes faster do athletes get by their 2nd, 3rd, 4th race?</p>
+                </div>
+                <div class="card">
+                    <h3>Career Trajectory (Percentile)</h3>
+                    <img src="output/figures/07_career_traj_pct.png" alt="Career Trajectory" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Percentile-based improvement — accounting for field strength changes between seasons.</p>
+                </div>
+                <div class="card">
+                    <h3>Personal Best Rate by Race Number</h3>
+                    <img src="output/figures/07_pb_rate.png" alt="PB Rate" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">What % of athletes set a <strong>personal best</strong> in their 2nd, 3rd, ... race?</p>
+                </div>
+                <div class="card">
+                    <h3>Nationality Performance</h3>
+                    <img src="output/figures/07_nationality_performance.png" alt="Nationality Performance" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card">
+                    <h3>Nationality Diversity Over Time</h3>
+                    <img src="output/figures/07_nationality_diversity.png" alt="Nationality Diversity" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">The sport is becoming <strong>increasingly international</strong> — unique nationalities per season.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 08 Deep Dive -->
+        <section id="deep-dive">
+            <div class="section-header">
+                <span class="badge badge-purple">08</span>
+                <h2>Advanced Deep-Dive Analysis</h2>
+                <p class="subtitle">Doubles vs solo, completion rates, age×station interactions, best-run-lap analysis, and more.</p>
+            </div>
+            <div class="grid">
+                <div class="card card-full">
+                    <h3>Doubles vs. Solo — Station Comparison</h3>
+                    <img src="output/figures/08_doubles_vs_solo.png" alt="Doubles vs Solo" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">How do doubles teams compare to solo athletes on each station? The <strong>teamwork factor</strong> revealed.</p>
+                </div>
+                <div class="card">
+                    <h3>Completion & Clean-Race Rates</h3>
+                    <img src="output/figures/08_completion_rates.png" alt="Completion Rates" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">How many starters actually finish with complete, valid data?</p>
+                </div>
+                <div class="card">
+                    <h3>Completion by City</h3>
+                    <img src="output/figures/08_completion_by_city.png" alt="Completion by City" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                </div>
+                <div class="card card-full">
+                    <h3>Age × Station Heatmap</h3>
+                    <img src="output/figures/08_age_station_heatmap.png" alt="Age Station Heatmap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Which stations hit older athletes <strong>disproportionately harder</strong>? The heatmap shows % slower vs the youngest age group.</p>
+                </div>
+                <div class="card">
+                    <h3>Best 1km Run Lap Analysis</h3>
+                    <img src="output/figures/08_best_run_lap.png" alt="Best Run Lap" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Distribution of best single 1km split and its <strong>correlation with overall finish</strong>.</p>
+                </div>
+                <div class="card">
+                    <h3>Time Allocation: Run vs Station by Cohort</h3>
+                    <img src="output/figures/08_time_allocation_by_cohort.png" alt="Time Allocation" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">How does the <strong>run/station balance</strong> shift from elite to developing athletes?</p>
+                </div>
+                <div class="card card-full">
+                    <h3>Station Position Effect</h3>
+                    <img src="output/figures/08_station_position_effect.png" alt="Station Position Effect" loading="lazy" onerror="this.closest('.card').style.display='none'">
+                    <p class="card-text">Is a station slow because it's inherently hard, or because of <strong>fatigue from its position in the race</strong>? Z-scored analysis within each athlete.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div>Generated from <strong>1,030,606</strong> unique results across <strong>68 columns</strong> • Dataset: hyrox_clean.parquet</div>
+            <div>Analysis pipeline: Polars + Matplotlib • Dashboard: Vanilla HTML/CSS/JS</div>
+        </div>
+    </main>
+
+    <script>
+        // Lightbox
+        document.querySelectorAll('.card img').forEach(img => {
+            img.addEventListener('click', () => {
+                const lb = document.getElementById('lightbox');
+                document.getElementById('lightbox-img').src = img.src;
+                lb.classList.add('active');
+            });
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('active');
+        });
+
+        // Active nav on scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    const active = document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
+                    if (active) active.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        sections.forEach(s => observer.observe(s));
+
+        // Mobile sidebar close on link click
+        document.querySelectorAll('.sidebar .nav-links a').forEach(a => {
+            a.addEventListener('click', () => {
+                document.querySelector('.sidebar').classList.remove('open');
+            });
+        });
+    </script>
+</body>
+</html>

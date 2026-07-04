@@ -47,13 +47,13 @@ def load_all_events() -> list[dict]:
 
 
 def done_events(pattern: str) -> set:
-    """Events finished (BOTH sexes) according to any collected manifest.json files."""
+    """Events finished (all 3 sexes) according to any collected manifest.json files."""
     sexes = defaultdict(set)
     for mf in glob.glob(pattern):
         for k in json.load(open(mf)).get("done", {}):
             s, eid, sex = k.split("|")
             sexes[(int(s), eid)].add(sex)
-    return {k for k, v in sexes.items() if "M" in v and "W" in v}
+    return {k for k, v in sexes.items() if "M" in v and "W" in v and "X" in v}
 
 
 def seed(chunk: int, done_pattern: str | None) -> None:
